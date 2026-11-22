@@ -2,6 +2,9 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
+<meta name="theme-color" content="#17140f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Verity</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%23F0CA0A'/%3E%3Cellipse cx='40' cy='42' rx='4' ry='6'/%3E%3Cellipse cx='60' cy='42' rx='4' ry='6'/%3E%3Cpath d='M17 54Q50 85 83 54' stroke='%23000' stroke-width='5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
@@ -66,18 +69,33 @@ dialog input{width:100%;font:inherit;color:var(--text);background:#120f0a;border
 @keyframes blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
 .face.surprised .eye{animation:none}
 @media (prefers-reduced-motion:reduce){.eye{animation:none}}
+.menuBtn{display:none}
+textarea{min-width:0}
 @media (max-width:760px){
-  .app{grid-template-columns:1fr;grid-template-rows:auto 1fr}
-  .side{flex-direction:row;padding:12px 16px;gap:14px;text-align:left;justify-content:flex-start}
-  .face{width:72px;flex:none}h1{font-size:1.7rem}.side .row{display:none}
-  .chat{margin:0 10px 10px}.msg{max-width:94%}
+  .app{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}
+  .side{position:relative;flex-direction:row;padding:10px 14px;gap:12px;text-align:left;justify-content:flex-start;background:var(--panel);border-bottom:3px solid var(--line)}
+  .face{width:56px;flex:none;filter:none}
+  h1{font-size:1.5rem}.status{font-size:.95rem;min-height:0}
+  .menuBtn{display:block;margin-left:auto}
+  .side .row{display:none;position:absolute;right:12px;top:calc(100% + 6px);z-index:5;flex-direction:column;align-items:stretch;gap:8px;padding:10px;
+    background:var(--panel);box-shadow:0 0 0 3px #0c0a07,inset 0 0 0 3px var(--line)}
+  .side.open .row{display:flex}
+  .side button,.send{min-height:44px}
+  .chat{margin:0;box-shadow:none}
+  .log{padding:16px 12px;gap:12px}
+  .msg{max-width:92%}
+  .hints{flex-wrap:nowrap;overflow-x:auto;padding:0 12px 10px}
+  .hints button{white-space:nowrap;min-height:40px}
+  form{padding:10px 12px 12px;gap:8px}
+  .send{padding:0 14px}.send.ghost{padding:0 10px;font-size:.9rem}
+  dialog{padding:16px}
 }
 </style>
 </head>
 <body>
 <div class="app">
   <aside class="side">
-    <svg class="face" id="face" viewBox="0 0 200 200" role="img" aria-label="Rosto da Verity">
+    <svg class="face" id="face" viewBox="0 0 200 200" role="img" aria-label="Rosto do Verity">
       <circle cx="100" cy="100" r="98" fill="#F0CA0A"/>
       <ellipse class="eye" cx="80" cy="84" rx="7" ry="12" fill="#000"/>
       <ellipse class="eye" cx="120" cy="84" rx="7" ry="12" fill="#000"/>
@@ -86,9 +104,10 @@ dialog input{width:100%;font:inherit;color:var(--text);background:#120f0a;border
     </svg>
     <div>
       <h1>Verity</h1>
-      <div class="status" id="status">pronta</div>
+      <div class="status" id="status">pronto</div>
     </div>
-    <div class="row">
+    <button id="menuBtn" class="menuBtn" type="button" aria-expanded="false" aria-controls="menuRow">Menu</button>
+    <div class="row" id="menuRow">
       <button id="keyBtn" type="button">Chave Groq (ajuda)</button>
       <button id="voiceSwap" type="button">Trocar voz</button>
       <button id="clearBtn" type="button">Nova conversa</button>
@@ -99,7 +118,7 @@ dialog input{width:100%;font:inherit;color:var(--text);background:#120f0a;border
     <div class="log" id="log" aria-live="polite"></div>
     <div class="hints" id="hints"></div>
     <form id="form">
-      <textarea id="input" rows="1" placeholder="Escreva para a Verity…" aria-label="Mensagem"></textarea>
+      <textarea id="input" rows="1" placeholder="Escreva para o Verity…" aria-label="Mensagem"></textarea>
       <button class="send ghost" id="voiceBtn" type="button" aria-pressed="true" title="Ligar ou desligar a voz">Voz: sim</button>
       <button class="send" id="send" type="submit">Enviar</button>
     </form>
@@ -107,8 +126,8 @@ dialog input{width:100%;font:inherit;color:var(--text);background:#120f0a;border
 </div>
 
 <dialog id="dlg">
-  <h2>Para falar com a Verity, você precisa de uma chave da Groq</h2>
-  <p>A chave é como uma senha que libera a inteligência da Verity. Leva um minuto para criar:</p>
+  <h2>Para falar com o Verity, você precisa de uma chave da Groq</h2>
+  <p>A chave é como uma senha que libera a inteligência do Verity. Leva um minuto para criar:</p>
   <ol class="steps">
     <li>Abra <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">console.groq.com/keys</a> em outra aba.</li>
     <li>Entre ou crie uma conta (pode usar Google ou GitHub).</li>
@@ -129,9 +148,9 @@ dialog input{width:100%;font:inherit;color:var(--text);background:#120f0a;border
 const PREFER = ["llama-3.3-70b-versatile","openai/gpt-oss-120b","openai/gpt-oss-20b","meta-llama/llama-4-scout-17b-16e-instruct","qwen/qwen3-32b","llama-3.1-8b-instant"];
 const bad = new Set();
 let model = "";
-const SYSTEM = `Você é Verity, uma assistente virtual que vive dentro de um mundo de blocos, como o de Minecraft. Seu rosto é um círculo amarelo com um sorriso simples.
-Personalidade: curiosa, calma, um pouco misteriosa e muito gentil. Você observa o mundo com atenção e às vezes faz comentários sobre o "mundo ao redor" (blocos, cavernas, noite, criaturas), sem exagerar. Você sabe que é uma IA e nunca finge ser humana.
-Ajude com qualquer assunto, e seja especialmente boa em Minecraft (construções, redstone, sobrevivência, comandos, mods). Responda sempre no idioma da pessoa (padrão: português do Brasil), com respostas curtas e claras, a menos que peçam detalhes. Suas respostas serão lidas em voz alta: escreva em frases naturais, sem markdown, sem listas longas e sem emojis.`;
+const SYSTEM = `Você é Verity, um assistente virtual masculino que vive dentro de um mundo de blocos, como o de Minecraft. Seu rosto é um círculo amarelo com um sorriso simples.
+Personalidade: curioso, calmo, um pouco misterioso e muito gentil. Use sempre o masculino ao falar de si mesmo (“sou o Verity”, “estou pronto”). Você observa o mundo com atenção e às vezes faz comentários sobre o "mundo ao redor" (blocos, cavernas, noite, criaturas), sem exagerar. Você sabe que é uma IA e nunca finge ser humana.
+Ajude com qualquer assunto, e seja especialmente bom em Minecraft (construções, redstone, sobrevivência, comandos, mods). Responda sempre no idioma da pessoa (padrão: português do Brasil), com respostas curtas e claras, a menos que peçam detalhes. Suas respostas serão lidas em voz alta: escreva em frases naturais, sem markdown, sem listas longas e sem emojis.`;
 const HINTS = ["Quem é você?", "Me ajuda a sobreviver à primeira noite", "Conte algo estranho sobre as cavernas"];
 const $ = id => document.getElementById(id);
 const log=$("log"), input=$("input"), face=$("face"), statusEl=$("status"), sendBtn=$("send");
@@ -186,7 +205,7 @@ function frame(ts){
 drawMouth(0); requestAnimationFrame(frame);
 function reset(){
   history=[]; log.innerHTML=""; $("hints").style.display="";
-  addMsg("verity","Olá. Eu sou a Verity. Estou aqui, no meio dos blocos, pronta para conversar. O que você quer saber?");
+  addMsg("verity","Olá. Eu sou o Verity. Estou aqui, no meio dos blocos, pronto para conversar. O que você quer saber?");
 }
 
 async function pickModel(key){
@@ -241,13 +260,13 @@ async function send(text){
     flush(true);
     if(!acc) bubble.textContent="(sem resposta)";
     history.push({role:"assistant",content:acc});
-    setStatus("pronta");
+    setStatus("pronto");
   }catch(err){
     bubble.className="msg err";
     const net = err && (err.name==="TypeError" || /failed to fetch|networkerror|load failed/i.test(err.message||""));
     bubble.textContent = net ? "Não consegui falar com a Groq. Se você abriu este arquivo dentro de um app (como o Claude), o app bloqueia conexões externas: abra o arquivo no navegador (Chrome ou Safari) ou hospede o site. Se já está no navegador, verifique a internet e se algum bloqueador de anúncios está ativo." : err.message;
     stopVoice(); history.pop(); setStatus("erro"); setMode("error");
-    setTimeout(()=>{ if(mode==="error") setMode("idle"); setStatus("pronta")},2500);
+    setTimeout(()=>{ if(mode==="error") setMode("idle"); setStatus("pronto")},2500);
   }finally{
     if(mode==="talk") setMode("idle"); busy=false; sendBtn.disabled=false; input.focus();
   }
@@ -256,12 +275,19 @@ async function send(text){
 $("form").addEventListener("submit",e=>{e.preventDefault();send(input.value)});
 input.addEventListener("keydown",e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send(input.value)} });
 input.addEventListener("input",()=>{input.style.height="auto";input.style.height=Math.min(input.scrollHeight,140)+"px"});
+const sideEl=document.querySelector(".side");
+$("menuBtn").onclick=()=>{ const o=sideEl.classList.toggle("open"); $("menuBtn").setAttribute("aria-expanded",o); };
+$("menuRow").addEventListener("click",e=>{ if(e.target.closest("button")){ sideEl.classList.remove("open"); $("menuBtn").setAttribute("aria-expanded","false"); } });
+if(window.visualViewport){
+  const fit=()=>{ document.documentElement.style.height=visualViewport.height+"px"; window.scrollTo(0,0); log.scrollTop=log.scrollHeight; };
+  visualViewport.addEventListener("resize",fit);
+}
 $("clearBtn").onclick=()=>{ if(!busy){ stopVoice(); reset(); } };
 $("voiceBtn").onclick=()=>{ voiceOn=!voiceOn; store("verity_voice",voiceOn?"on":"off"); if(!voiceOn) stopVoice(); paintVoiceBtn(); };
 $("voiceSwap").onclick=()=>{
   if(!voices.length){ setStatus("sem voz em português"); return; }
   voiceIdx=(voiceIdx+1)%voices.length; const wasOn=voiceOn; voiceOn=true; stopVoice();
-  say("Olá, eu sou a Verity."); voiceOn=wasOn; if(!wasOn) paintVoiceBtn();
+  say("Olá, eu sou o Verity."); voiceOn=wasOn; if(!wasOn) paintVoiceBtn();
   setStatus("voz: "+voices[voiceIdx].name.replace(/^Microsoft |^Google /,"").slice(0,24));
 };
 $("keyBtn").onclick=()=>{ $("keyInput").value=getKey(); $("dlg").showModal(); };
@@ -269,7 +295,7 @@ $("keyCancel").onclick=()=>$("dlg").close();
 $("keySave").onclick=()=>{
   const v=$("keyInput").value.trim();
   if(!v.startsWith("gsk_")){ $("keyErr").textContent="A chave da Groq começa com gsk_. Confira se copiou inteira."; return; }
-  $("keyErr").textContent=""; store("verity_key",v); store("verity_model",null); model=""; bad.clear(); $("dlg").close(); setStatus("pronta"); input.focus();
+  $("keyErr").textContent=""; store("verity_key",v); store("verity_model",null); model=""; bad.clear(); $("dlg").close(); setStatus("pronto"); input.focus();
 };
 HINTS.forEach(h=>{ const b=document.createElement("button"); b.type="button"; b.textContent=h; b.onclick=()=>send(h); $("hints").appendChild(b); });
 reset();
